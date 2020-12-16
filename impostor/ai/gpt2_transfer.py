@@ -10,5 +10,11 @@ history = [["hello", "how", "are", "you", "?"],
 
 reply = ["great", "to", "hear", "."]
 
-bos, eos, self, other, lsep = "<bos>", "<eos>", "<self>", "<other>", "<lsep>"
+bos, eos, speaker_self, speaker_other, lsep, pad = "<bos>", "<eos>", "<speaker_self>", "<speaker_other>", "<lsep>", "<pad>"
+
+SPECIAL_TOKENS = [bos, eos, speaker_self, speaker_other, lsep, pad]
+
+model.set_special_tokens(SPECIAL_TOKENS)
+tokenizer.set_special_tokens(SPECIAL_TOKENS)
+
 
