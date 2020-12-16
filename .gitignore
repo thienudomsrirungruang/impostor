@@ -1,5 +1,7 @@
 # other folders
 data/
+.idea/
+.idea/workspace.xml
 
 
 # Byte-compiled / optimized / DLL files

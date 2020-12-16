@@ -19,3 +19,4 @@ Hugging Face transformer install:
 Also requires:
 
 * matplotlib
+* pyyaml
