@@ -28,6 +28,7 @@ model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
 
 
 def build_inputs(history: List[Tuple[bool, List[str]]], reply: Tuple[bool, List[str]]):
+    history = history + [reply]
     sequence = list(map(lambda x: [speaker_self if x[0] else speaker_other] + x[1], history))
     # print(sequence)
     sequence[0] = [bos] + sequence[0]
@@ -46,4 +47,36 @@ print(words, segments, position, sequence, sep="\n")
 words = tokenizer.convert_tokens_to_ids(words)
 segments = tokenizer.convert_tokens_to_ids(segments)
 
+print("Actual:")
 print(words, segments, sep="\n")
+
+# example data
+distractor = (True, ["sorry", "to", "hear", "that", ":", "("])
+
+words_distractor, segments_distractor, _, _ = build_inputs(history, distractor)
+words_distractor = tokenizer.convert_tokens_to_ids(words_distractor)
+segments_distractor = tokenizer.convert_tokens_to_ids(segments_distractor)
+print("Distractor:")
+print(words_distractor, segments_distractor, sep="\n")
+
+
+lm_targets = ([-1] * sum(len(s) for s in sequence[:-1])) + [-1] + tokenizer.convert_tokens_to_ids(sequence[-1][1:])
+lm_distractor = [-1] * len(words_distractor)
+
+last_token = len(words) - 1
+last_token_distractor = len(words_distractor) - 1
+
+padding_length = max(len(words), len(words_distractor))
+
+
+def pad(x: List[int], padding: int):
+    return x + [padding] * (padding_length - len(x))
+
+
+words, words_distractor, segments, segments_distractor = [pad(x, tokenizer.convert_tokens_to_ids("<pad>"))
+                                                          for x in (words, words_distractor, segments, segments_distractor)]
+
+lm_targets, lm_distractor = [pad(x, -1) for x in (lm_targets, lm_distractor)]
+
+print("Actual:", words, segments, lm_targets, sep="\n")
+print("Distractor:", words_distractor, segments_distractor, lm_distractor, sep="\n")
