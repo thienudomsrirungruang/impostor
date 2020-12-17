@@ -23,7 +23,7 @@ Also converts newlines into <lsep>.
 """
 
 
-def parse_chat_logs(file_path: str) -> List[List[Tuple[bool, str]]]:
+def parse_chat_logs(file_path: str) -> List[Tuple[bool, List[str]]]:
     words = []
     with open(file_path, "r") as f:
         chats = f.read()
@@ -39,11 +39,11 @@ def parse_chat_logs(file_path: str) -> List[List[Tuple[bool, str]]]:
             continue
         if re.fullmatch(date_regex, line):
             if len(current_convo) > 0:
-                merged_chats.append(current_convo)
+                merged_chats.append((sender == user_name, current_convo))
             current_convo = []
         elif m := re.fullmatch(new_chat_regex, line):
             if len(current_msg) > 0:
-                current_convo.append((sender == user_name, current_msg))
+                current_convo.append(current_msg)
             current_msg = m.groups()[2]
             sender = m.groups()[1]
         else:
@@ -52,7 +52,7 @@ def parse_chat_logs(file_path: str) -> List[List[Tuple[bool, str]]]:
     if len(current_convo) > 0:
         current_convo.append(current_msg)
     if len(current_msg) > 0:
-        merged_chats.append(current_convo)
+        merged_chats.append((sender == user_name, current_convo))
 
     return merged_chats
 
