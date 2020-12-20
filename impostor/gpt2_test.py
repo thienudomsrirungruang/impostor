@@ -5,8 +5,6 @@ from transformers import OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer
 
 from itertools import chain
 
-from impostor.data_collection.parse_chat import parse_chat_logs
-
 model = OpenAIGPTDoubleHeadsModel.from_pretrained("openai-gpt")
 tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
 
