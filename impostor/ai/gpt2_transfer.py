@@ -80,3 +80,16 @@ lm_targets, lm_distractor = [pad(x, -1) for x in (lm_targets, lm_distractor)]
 
 print("Actual:", words, segments, lm_targets, sep="\n")
 print("Distractor:", words_distractor, segments_distractor, lm_distractor, sep="\n")
+
+input_ids = torch.tensor([[words, words_distractor]], dtype=torch.long)
+token_type_ids = torch.tensor([[segments, segments_distractor]], dtype=torch.long)
+mc_token_ids = torch.tensor([[last_token, last_token_distractor]], dtype=torch.long)
+lm_labels = torch.tensor([[lm_targets, lm_distractor]], dtype=torch.long)
+mc_labels = torch.tensor([0], dtype=torch.long)
+
+print("input_ids: {}\ntoken_type_ids: {}\nmc_token_ids: {}\nlm_labels: {}\nmc_labels: {}"
+      .format(input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels))
+
+model_output = model(input_ids, token_type_ids=token_type_ids, mc_token_ids=mc_token_ids, mc_labels=mc_labels, labels=lm_labels)
+
+print(model_output.loss.item(), model_output.mc_loss.item())
