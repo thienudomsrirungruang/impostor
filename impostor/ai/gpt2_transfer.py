@@ -60,8 +60,8 @@ print("Distractor:")
 print(words_distractor, segments_distractor, sep="\n")
 
 
-lm_targets = ([-1] * sum(len(s) for s in sequence[:-1])) + [-1] + tokenizer.convert_tokens_to_ids(sequence[-1][1:])
-lm_distractor = [-1] * len(words_distractor)
+lm_targets = ([-100] * sum(len(s) for s in sequence[:-1])) + [-100] + tokenizer.convert_tokens_to_ids(sequence[-1][1:])
+lm_distractor = [-100] * len(words_distractor)
 
 last_token = len(words) - 1
 last_token_distractor = len(words_distractor) - 1
@@ -76,7 +76,7 @@ def pad(x: List[int], padding: int):
 words, words_distractor, segments, segments_distractor = [pad(x, tokenizer.convert_tokens_to_ids("<pad>"))
                                                           for x in (words, words_distractor, segments, segments_distractor)]
 
-lm_targets, lm_distractor = [pad(x, -1) for x in (lm_targets, lm_distractor)]
+lm_targets, lm_distractor = [pad(x, -100) for x in (lm_targets, lm_distractor)]
 
 print("Actual:", words, segments, lm_targets, sep="\n")
 print("Distractor:", words_distractor, segments_distractor, lm_distractor, sep="\n")
