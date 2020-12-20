@@ -24,7 +24,7 @@ Also converts newlines into <lsep>.
 
 
 def parse_chat_logs(file_path: str) -> List[List[Tuple[bool, str]]]:
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="ascii", errors="ignore") as f:
         chats = f.read()
     chats = chats.split("\n")
 
