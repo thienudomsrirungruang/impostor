@@ -15,8 +15,8 @@ bos, eos, speaker_self, speaker_other, lsep, pad = "<bos>", "<eos>", "<speaker_s
 # history = [[(True, "hello"), (True, "how"), (True, "are"), (True, "you"), (True, "?")],
 #            [(False, "i"), (False, "am"), (False, "fine"), (False, "thanks"), (False, ".")]]
 
-history = [(True, ["hello", "how", "are", "you", "?"]),
-           (False, ["i", "am", "fine", "thanks", "."])]
+history = [(True, tokenizer.tokenize("hello how are you?")),
+           (False, tokenizer.tokenize("i am fine thanks."))]
 
 reply = (True, ["good", "to", "hear", "."])
 
@@ -52,7 +52,7 @@ print("Actual:")
 print(words, segments, sep="\n")
 
 # example data
-distractor = (True, ["sorry", "to", "hear", "that", ":", "("])
+distractor = (True, tokenizer.tokenize("sorry to hear that :("))
 
 words_distractor, segments_distractor, _, _ = build_inputs(history, distractor)
 words_distractor = tokenizer.convert_tokens_to_ids(words_distractor)
