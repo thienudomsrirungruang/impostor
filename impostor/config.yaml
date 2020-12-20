@@ -1,1 +1,6 @@
 user-name: Thien
+chat_log_directory: ../data/raw-history/
+dataset:
+  file: ../dataset/chat-set.pt
+  num_candidates: 4
+  max_history: 8
