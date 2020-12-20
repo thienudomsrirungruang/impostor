@@ -1,5 +1,6 @@
 from typing import *
 
+import torch
 from transformers import OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer
 
 from itertools import chain
