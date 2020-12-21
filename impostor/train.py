@@ -80,7 +80,8 @@ def train(dataset_path: str):
             loss = lm_loss * config["train"]["lm_coeff"] + mc_loss * config["train"]["mc_coeff"]
 
             # logging
-            log_file.write("{},{},{},{},{}".format(iteration, epoch, loss, lm_loss, mc_loss))
+            log_file.write("{},{},{},{},{}\n".format(iteration, epoch, loss, lm_loss, mc_loss))
+            log_file.flush()
 
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), config["train"]["max_norm"])
