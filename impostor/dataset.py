@@ -28,7 +28,7 @@ def build_inputs(history: List[Tuple[bool, List[str]]], reply: Tuple[bool, List[
     token_type_ids = tokenizer.convert_tokens_to_ids(segments)
     lm_labels = [-100] * len(input_ids)
     if populate_lm_labels:
-        lm_labels = ([-100] * sum(len(s) for s in sequence[:-1])) + [-100] + sequence[-1][1:]
+        lm_labels = ([-100] * sum(len(s) for s in sequence[:-1])) + tokenizer.convert_tokens_to_ids(sequence[-1])
     return input_ids, mc_token_ids, token_type_ids, lm_labels
 
 
@@ -40,16 +40,17 @@ class ChatDataset(Dataset):
 
     def __getitem__(self, idx: int) -> DefaultDict:
         out = defaultdict(list)
+        tokenizer = self._tokenizer
         history = list(map(lambda x: (x[0], tokenizer.tokenize(x[1])), self._dataset_object["history"][idx]))
-        for candidate in self._dataset_object["candidates"][idx]:
+        correct = self._dataset_object["correct"][idx]
+        out["correct"] = correct
+        for i, candidate in enumerate(self._dataset_object["candidates"][idx]):
             candidate = (candidate[0], tokenizer.tokenize(candidate[1]))
-            input_ids, mc_token_ids, token_type_ids, lm_labels = build_inputs(history,
-                                                                              candidate, tokenizer)
+            input_ids, mc_token_ids, token_type_ids, lm_labels = build_inputs(history, candidate, tokenizer, i == correct)
             out["input_ids"].append(input_ids)
             out["mc_token_ids"].append(mc_token_ids)
             out["token_type_ids"].append(token_type_ids)
             out["lm_labels"].append(lm_labels)
-        out["correct"] = self._dataset_object["correct"][idx]
         return out
 
     def __len__(self):
@@ -82,7 +83,7 @@ def get_data_loader(dataset: ChatDataset, tokenizer: transformers.OpenAIGPTToken
     return loader
 
 
-def get_dataset(dataset_path: str):
+def get_dataset(dataset_path: str, tokenizer: transformers.OpenAIGPTTokenizer):
     dataset_object = torch.load(dataset_path)
     dataset = ChatDataset(dataset_object, tokenizer)
     return dataset
@@ -98,7 +99,7 @@ if __name__ == "__main__":
     orig_num_tokens = len(tokenizer.encoder)
     num_added_tokens = tokenizer.add_special_tokens(SPECIAL_TOKENS)
 
-    dataset = get_dataset("../dataset/testing-set.pt")
+    dataset = get_dataset("../dataset/testing-set.pt", tokenizer)
 
     loader = get_data_loader(dataset, tokenizer)
     for x in loader:
