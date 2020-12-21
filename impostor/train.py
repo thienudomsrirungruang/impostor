@@ -96,7 +96,7 @@ def train(dataset_path: str):
 
             if datetime.datetime.now() - last_model_save > datetime.timedelta(hours=1):
                 print("Saving model...")
-                torch.save(model.state_dict(), "checkpoints/model-{}-iter{}".format(
+                torch.save(model.state_dict(), "checkpoints/model-{}-iter{}.pt".format(
                                     start_time.strftime("%y-%m-%d-%H-%M-%S"), iteration))
 
             iteration += 1
