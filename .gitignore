@@ -3,6 +3,8 @@ data/
 dataset/
 .idea/
 .idea/workspace.xml
+impostor/checkpoints/
+impostor/log/
 
 
 # Byte-compiled / optimized / DLL files

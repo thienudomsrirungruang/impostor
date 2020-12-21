@@ -2,5 +2,13 @@ user-name: Thien
 chat_log_directory: ../data/raw-history/
 dataset:
   file: ../dataset/chat-set.pt
-  num_candidates: 4
-  max_history: 8
+  num_candidates: 3
+  max_history: 4
+train:
+  batch_size: 4
+  num_epochs: 3
+  train_dataset_proportion: 0.95
+  learning_rate: 6.25e-5
+  lm_coeff: 2.0
+  mc_coeff: 1.0
+  max_norm: 1
