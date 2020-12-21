@@ -67,7 +67,7 @@ def make_batch(dialogs: List[DefaultDict], pad_token_id: int):
         if k == "correct":
             out[k] = torch.tensor([x["correct"] for x in dialogs], dtype=torch.long)
         elif k == "mc_token_ids":
-            out[k] = torch.tensor([pad_list(x[k], pad_token_id, max_length) for x in dialogs], dtype=torch.long)
+            out[k] = torch.tensor([x["mc_token_ids"] for x in dialogs], dtype=torch.long)
         else:
             out[k] = torch.tensor([[pad_list(y, -100 if k == "lm_labels" else pad_token_id, max_length) for y in x[k]] for x in dialogs],
                                   dtype=torch.long)
