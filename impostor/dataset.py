@@ -74,14 +74,18 @@ def make_batch(dialogs: List[DefaultDict], pad_token_id: int):
     return out
 
 
-def get_data_loader(dataset_path: str, tokenizer: transformers.OpenAIGPTTokenizer,
+def get_data_loader(dataset: ChatDataset, tokenizer: transformers.OpenAIGPTTokenizer,
                     batch_size: int = 4, shuffle: bool = True, num_workers: int = 0) -> DataLoader:
-    dataset_object = torch.load(dataset_path)
-    chat_dataset = ChatDataset(dataset_object, tokenizer)
     pad_token_id = tokenizer.convert_tokens_to_ids("<pad>")
-    loader = DataLoader(chat_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers,
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers,
                         collate_fn=lambda x: make_batch(x, pad_token_id))
     return loader
+
+
+def get_dataset(dataset_path: str):
+    dataset_object = torch.load(dataset_path)
+    dataset = ChatDataset(dataset_object, tokenizer)
+    return dataset
 
 
 if __name__ == "__main__":
@@ -94,6 +98,8 @@ if __name__ == "__main__":
     orig_num_tokens = len(tokenizer.encoder)
     num_added_tokens = tokenizer.add_special_tokens(SPECIAL_TOKENS)
 
-    loader = get_data_loader("../dataset/testing-set.pt", tokenizer)
+    dataset = get_dataset("../dataset/testing-set.pt")
+
+    loader = get_data_loader(dataset, tokenizer)
     for x in loader:
         print(x)
