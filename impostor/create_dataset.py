@@ -52,8 +52,9 @@ def create_dataset(input_dir: str, output_file: str, num_candidates: int, max_hi
                 # replies = utterance + np.random.choice(utterances, NUM_CANDIDATES - 1)
                 candidates = [utterance]
                 for _ in range(num_candidates - 1):
-                    while (x := utterances[np.random.randint(0, len(utterances))]) in candidates:
-                        pass
+                    x = utterances[np.random.randint(0, len(utterances))]
+                    while x in candidates:
+                        x = utterances[np.random.randint(0, len(utterances))]
                     candidates.append(x)
                 correct = np.random.randint(0, num_candidates)
                 candidates[correct], candidates[0] = candidates[0], candidates[correct]
