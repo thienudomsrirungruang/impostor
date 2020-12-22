@@ -1,3 +1,4 @@
+import os
 from typing import *
 
 import torch
@@ -12,7 +13,7 @@ import datetime
 
 from dataset import get_dataset, get_data_loader
 
-config = yaml.safe_load(open("config.yaml"))
+config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
 
 def train(dataset_path: str):
@@ -53,7 +54,7 @@ def train(dataset_path: str):
     # init logging
     start_time = datetime.datetime.now()
     last_model_save = start_time
-    log_file = open("log/log-{}.txt".format(start_time.strftime("%y-%m-%d-%H-%M-%S")), "w+")
+    log_file = open(os.path.join(os.path.dirname(__file__), "log/log-{}.txt").format(start_time.strftime("%y-%m-%d-%H-%M-%S")), "w+")
 
     epochs = config["train"]["num_epochs"]
     iteration = 0
@@ -97,8 +98,8 @@ def train(dataset_path: str):
 
             if datetime.datetime.now() - last_model_save > datetime.timedelta(hours=1):
                 print("Saving model...")
-                torch.save(model.state_dict(), "checkpoints/model-{}-iter{}.pt".format(
-                                    start_time.strftime("%y-%m-%d-%H-%M-%S"), iteration))
+                torch.save(model.state_dict(), os.path.join(os.path.dirname(__file__), "checkpoints/model-{}-iter{}.pt")
+                           .format(start_time.strftime("%y-%m-%d-%H-%M-%S"), iteration))
 
             iteration += 1
 

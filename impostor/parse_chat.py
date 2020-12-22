@@ -1,10 +1,11 @@
+import os
 from typing import *
 
 import yaml
 
 import re
 
-config = yaml.safe_load(open("config.yaml"))
+config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
 user_name = config["user-name"]
 

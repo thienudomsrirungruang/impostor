@@ -14,7 +14,7 @@ from parse_chat import parse_chat_logs
 
 from transformers import OpenAIGPTTokenizer
 
-config = yaml.safe_load(open("config.yaml"))
+config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
 
 def create_dataset(input_dir: str, output_file: str, num_candidates: int, max_history: int):
