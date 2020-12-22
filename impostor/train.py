@@ -103,6 +103,10 @@ def train(dataset_path: str):
 
             iteration += 1
 
+    print("Saving model...")
+    torch.save(model.state_dict(), os.path.join(os.path.dirname(__file__), "checkpoints/model-{}-iter{}.pt")
+               .format(start_time.strftime("%y-%m-%d-%H-%M-%S"), iteration))
+
 
 if __name__ == "__main__":
     train(config["dataset"]["file"])
