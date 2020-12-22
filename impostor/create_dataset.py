@@ -12,6 +12,8 @@ import shutil
 
 from impostor.parse_chat import parse_chat_logs
 
+from transformers import OpenAIGPTTokenizer
+
 config = yaml.safe_load(open("config.yaml"))
 
 
@@ -25,10 +27,19 @@ def create_dataset(input_dir: str, output_file: str, num_candidates: int, max_hi
         parsed = parse_chat_logs(os.path.join(input_dir, file))
         parsed_logs.append(parsed)
 
+    # init tokenizer for checking
+    tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
+    special_tokens = {"bos_token": "<bos>", "eos_token": "<eos>",
+                      "additional_special_tokens": ["<speaker_self>", "<speaker_other>", "<lsep>"], "pad_token": "<pad>"}
+    tokenizer.add_special_tokens(special_tokens)
+
     utterances = set()
     for parsed in parsed_logs:
         for dialog in parsed:
             for utterance in dialog:
+                length = len(tokenizer.tokenize(utterance[1]))
+                if length > config["dataset"]["max_message_length"]:
+                    print("Skipping following message:\n{}".format(utterance[1] if len(utterance[1]) < 512 else utterance[1][:510] + "..."))
                 utterances.add(utterance)
     utterances = list(utterances)
     # print(utterances)

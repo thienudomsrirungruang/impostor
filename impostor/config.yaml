@@ -4,6 +4,7 @@ dataset:
   file: ../dataset/chat-set.pt
   num_candidates: 3
   max_history: 4
+  max_message_length: 128
 train:
   batch_size: 4
   num_epochs: 3
