@@ -17,9 +17,11 @@ config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yam
 
 
 def train(dataset_path: str):
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    device = torch.device("cpu")  # gpu not enough memory :(
+    print("Device: {}".format(device))
+
+    # device = torch.device("cpu")  # gpu not enough memory :(
 
     model = OpenAIGPTDoubleHeadsModel.from_pretrained("openai-gpt")
     model.to(device)
@@ -54,7 +56,10 @@ def train(dataset_path: str):
     # init logging
     start_time = datetime.datetime.now()
     last_model_save = start_time
-    log_file = open(os.path.join(os.path.dirname(__file__), "log/log-{}.txt").format(start_time.strftime("%y-%m-%d-%H-%M-%S")), "w+")
+    save_path = os.path.join(os.path.dirname(__file__), "log/log-{}.txt".format(start_time.strftime("%y-%m-%d-%H-%M-%S")))
+    print(os.path.dirname(__file__), save_path)
+    f = open(save_path, "w+")
+    f.close()
 
     epochs = config["train"]["num_epochs"]
     iteration = 0
@@ -68,8 +73,12 @@ def train(dataset_path: str):
             lm_labels = batch["lm_labels"].to(device)
             mc_labels = batch["correct"].to(device)
 
-            model_output = model(input_ids, token_type_ids=token_type_ids, mc_token_ids=mc_token_ids,
-                                 mc_labels=mc_labels, labels=lm_labels)
+            try:
+                model_output = model(input_ids, token_type_ids=token_type_ids, mc_token_ids=mc_token_ids,
+                                    mc_labels=mc_labels, labels=lm_labels)
+            except Exception as e:
+                print(input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, sep="\n")
+                raise e
 
             # print("input_ids: {}\ntoken_type_ids: {}\nmc_token_ids: {}\nlm_labels: {}\nmc_labels: {}"
             #       .format(input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels))
@@ -81,8 +90,10 @@ def train(dataset_path: str):
             loss = lm_loss * config["train"]["lm_coeff"] + mc_loss * config["train"]["mc_coeff"]
 
             # logging
+            log_file = open(save_path, "a")
             log_file.write("{},{},{},{},{}\n".format(iteration, epoch, loss, lm_loss, mc_loss))
             log_file.flush()
+            log_file.close()
 
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), config["train"]["max_norm"])
@@ -91,15 +102,17 @@ def train(dataset_path: str):
 
             # TODO: evaluation
 
-            print("Time: {} Epoch: {}/{} Iteration: {}/{} Loss: {} ({} {})"
-                  .format(datetime.datetime.now() - start_time,
-                          epoch, epochs, iteration, epochs * (len(train_dataset) // config["train"]["batch_size"]),
-                          loss.item(), lm_loss.item(), mc_loss.item()))
+            if iteration % 50 == 0:
+                print("Time: {} Epoch: {}/{} Iteration: {}/{} Loss: {} ({} {})"
+                    .format(datetime.datetime.now() - start_time,
+                            epoch, epochs, iteration, epochs * (len(train_dataset) // config["train"]["batch_size"]),
+                            loss.item(), lm_loss.item(), mc_loss.item()))
 
-            if datetime.datetime.now() - last_model_save > datetime.timedelta(hours=1):
+            if datetime.datetime.now() - last_model_save > datetime.timedelta(minutes=1):
                 print("Saving model...")
                 torch.save(model.state_dict(), os.path.join(os.path.dirname(__file__), "checkpoints/model-{}-iter{}.pt")
                            .format(start_time.strftime("%y-%m-%d-%H-%M-%S"), iteration))
+                last_model_save = datetime.datetime.now()
 
             iteration += 1
 
