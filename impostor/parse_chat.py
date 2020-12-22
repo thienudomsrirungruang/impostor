@@ -36,11 +36,12 @@ def parse_chat_logs(file_path: str) -> List[List[Tuple[bool, str]]]:
     for line in chats:
         if line == "":
             continue
+        m = re.fullmatch(new_chat_regex, line)
         if re.fullmatch(date_regex, line):
             if len(current_convo) > 0:
                 merged_chats.append(current_convo)
             current_convo = []
-        elif m := re.fullmatch(new_chat_regex, line):
+        elif m:
             if len(current_msg) > 0:
                 current_convo.append((sender == user_name, current_msg))
             current_msg = m.groups()[2]
