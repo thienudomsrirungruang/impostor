@@ -10,7 +10,7 @@ import yaml
 import os
 import shutil
 
-from impostor.parse_chat import parse_chat_logs
+from parse_chat import parse_chat_logs
 
 from transformers import OpenAIGPTTokenizer
 

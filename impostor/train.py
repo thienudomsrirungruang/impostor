@@ -10,7 +10,7 @@ import yaml
 
 import datetime
 
-from impostor.dataset import get_dataset, get_data_loader
+from dataset import get_dataset, get_data_loader
 
 config = yaml.safe_load(open("config.yaml"))
 
