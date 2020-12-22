@@ -33,20 +33,21 @@ def create_dataset(input_dir: str, output_file: str, num_candidates: int, max_hi
                       "additional_special_tokens": ["<speaker_self>", "<speaker_other>", "<lsep>"], "pad_token": "<pad>"}
     tokenizer.add_special_tokens(special_tokens)
 
-    utterances = set()
+    utterances_set = set()
     for parsed in parsed_logs:
         for dialog in parsed:
             for utterance in dialog:
                 length = len(tokenizer.tokenize(utterance[1]))
                 if length > config["dataset"]["max_message_length"]:
                     print("Skipping following message:\n{}".format(utterance[1] if len(utterance[1]) < 512 else utterance[1][:510] + "..."))
-                utterances.add(utterance)
-    utterances = list(utterances)
+                utterances_set.add(utterance)
+    utterances = list(utterances_set)
     # print(utterances)
 
     for parsed in parsed_logs:
         for dialog in parsed:
             for i, utterance in enumerate(dialog):
+                if utterance not in utterances_set: continue
                 history = dialog[max(0, i - max_history):i]
                 # replies = utterance + np.random.choice(utterances, NUM_CANDIDATES - 1)
                 candidates = [utterance]
