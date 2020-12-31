@@ -14,17 +14,15 @@ new_chat_regex = r"(\d{2}:\d{2})\t([^\t]*)\t(.*)"
 date_regex = r"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2}\/\d{2}\/\d{4}"
 
 
-"""Parses a chat log in the file specified, into lists of chats with annotations.
-
-Takes in a file_path, which is a file exported from LINE.
-Splits chats into conversations by date, and returns a list of conversations.
-Each conversation is a list of tuples (user, message) where user is a boolean corresponding to whether the sender is the
-user or not, and message is a string corresponding to the message.
-Also converts newlines into <lsep>.
-"""
-
-
 def parse_chat_logs(file_path: str) -> List[List[Tuple[bool, str]]]:
+    """Parses a chat log in the file specified, into lists of chats with annotations.
+
+    Takes in a file_path, which is a file exported from LINE.
+    Splits chats into conversations by date, and returns a list of conversations.
+    Each conversation is a list of tuples (user, message) where user is a boolean corresponding to whether the sender is the
+    user or not, and message is a string corresponding to the message.
+    Also converts newlines into <lsep>.
+    """
     with open(file_path, "r", encoding="ascii", errors="ignore") as f:
         chats = f.read()
     chats = chats.split("\n")
