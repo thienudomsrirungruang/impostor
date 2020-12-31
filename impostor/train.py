@@ -75,7 +75,7 @@ def train(dataset_path: str):
 
             try:
                 model_output = model(input_ids, token_type_ids=token_type_ids, mc_token_ids=mc_token_ids,
-                                    mc_labels=mc_labels, labels=lm_labels)
+                                     mc_labels=mc_labels, labels=lm_labels)
             except Exception as e:
                 print(input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, sep="\n")
                 raise e
@@ -104,9 +104,9 @@ def train(dataset_path: str):
 
             if iteration % 50 == 0:
                 print("Time: {} Epoch: {}/{} Iteration: {}/{} Loss: {} ({} {})"
-                    .format(datetime.datetime.now() - start_time,
-                            epoch, epochs, iteration, epochs * (len(train_dataset) // config["train"]["batch_size"]),
-                            loss.item(), lm_loss.item(), mc_loss.item()))
+                      .format(datetime.datetime.now() - start_time,
+                              epoch, epochs, iteration, epochs * (len(train_dataset) // config["train"]["batch_size"]),
+                              loss.item(), lm_loss.item(), mc_loss.item()))
 
             if datetime.datetime.now() - last_model_save > datetime.timedelta(minutes=1):
                 print("Saving model...")
