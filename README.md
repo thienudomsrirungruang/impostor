@@ -16,7 +16,8 @@ Hugging Face transformer install:
 
 `pip install transformers`
 
-Also requires:
+Also requires (from pip):
 
 * matplotlib
 * pyyaml
+* discord.py
