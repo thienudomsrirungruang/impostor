@@ -97,8 +97,7 @@ def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTT
     speaker_self_token = tokenizer.convert_tokens_to_ids(speaker_self)
 
     cutoff = 500
-    # TODO: customization of max sequence length
-    for i in range(100):
+    for i in range(config["bot"]["token_limit"]):
         model_out = model(torch.tensor([input_ids], dtype=torch.long)[-cutoff:],
                           token_type_ids=torch.tensor([token_type_ids], dtype=torch.long)[-cutoff:])
         logits = model_out.logits[0, -1, :] / config["eval"]["temperature"]

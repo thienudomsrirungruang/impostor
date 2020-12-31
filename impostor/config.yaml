@@ -19,3 +19,5 @@ eval:
   top_p: 0.9
 bot:
   bot_token: put_token_here
+  history_limit: 10
+  token_limit: 40
