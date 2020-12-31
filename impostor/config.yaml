@@ -18,5 +18,4 @@ eval:
   temperature: 0.7
   top_p: 0.9
 bot:
-  client_id: 12345678912356789
-  client_secret: put_secret_here
+  bot_token: put_token_here
