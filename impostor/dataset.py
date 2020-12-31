@@ -14,13 +14,15 @@ from collections import defaultdict
 bos, eos, speaker_self, speaker_other = "<bos>", "<eos>", "<speaker_self>", "<speaker_other>"
 
 
-def build_inputs(history: List[Tuple[bool, List[str]]], reply: Tuple[bool, List[str]],
-                 tokenizer: transformers.OpenAIGPTTokenizer, populate_lm_labels=False, with_eos=True):
-    history = history + [reply]
+def build_inputs(history: List[Tuple[bool, List[str]]], reply: Optional[Tuple[bool, List[str]]],
+                 tokenizer: transformers.OpenAIGPTTokenizer, populate_lm_labels=False, with_eos=True, with_reply=True):
+    if with_reply:
+        history = history + [reply]
     sequence = list(map(lambda x: [speaker_self if x[0] else speaker_other] + x[1], history))
     # print(sequence)
     sequence[0] = [bos] + sequence[0]
-    sequence[-1] = sequence[-1] + [eos]
+    if with_eos:
+        sequence[-1] = sequence[-1] + [eos]
     words = list(chain(*sequence))
     segments = list(chain(*[[speaker_self if s[0] else speaker_other] * len(sequence[i]) for i, s in enumerate(history)]))
     input_ids = tokenizer.convert_tokens_to_ids(words)
