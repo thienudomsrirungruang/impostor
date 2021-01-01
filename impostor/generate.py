@@ -63,14 +63,15 @@ def filter_logits(logits: torch.Tensor, tokenizer: OpenAIGPTTokenizer,
 
 
 def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTTokenizer,
-                          model: OpenAIGPTDoubleHeadsModel) -> List[str]:
+                          model: OpenAIGPTDoubleHeadsModel, token_blacklist: Optional[List[str]] = None) -> List[str]:
     """Generates an utterance given a set of messages preceding it.
 
     :argument history: a list of tuples (user, message)
                             user is a boolean on whether sender is user.
                             message is string.
     :argument tokenizer: the tokenizer
-    :argument model: the model"""
+    :argument model: the model
+    :argument token_blacklist: a list of tokens to not make the network generate"""
 
     # build the network inputs
     output = []
@@ -90,15 +91,16 @@ def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTT
 
     model.eval()
 
-    eos_token = tokenizer.convert_tokens_to_ids(eos)
+    # eos_token = tokenizer.convert_tokens_to_ids(eos)
     speaker_self_token = tokenizer.convert_tokens_to_ids(speaker_self)
+    speaker_other_token = tokenizer.convert_tokens_to_ids(speaker_other)
 
     cutoff = 500
     for i in range(config["bot"]["token_limit"]):
         model_out = model(torch.tensor([input_ids], dtype=torch.long)[-cutoff:],
                           token_type_ids=torch.tensor([token_type_ids], dtype=torch.long)[-cutoff:])
         logits = model_out.logits[0, -1, :] / config["eval"]["temperature"]
-        blacklist = [bos, speaker_other, pad]
+        blacklist = [bos, eos, pad] + token_blacklist
         logits = filter_logits(logits, tokenizer, False, blacklist=blacklist)
         logits = top_p_sample(logits, config["eval"]["top_p"])
         # print("{} -> {}".format(tokenizer.convert_ids_to_tokens(output[-5:]), tokenizer.convert_ids_to_tokens(torch.topk(logits, 5)[1])))
@@ -107,14 +109,14 @@ def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTT
         input_ids.append(prev)
         token_type_ids.append(speaker_self_token)
         output.append(prev)
-        if prev == eos_token:
+        if prev == speaker_other_token:
             break
 
     output = tokenizer.convert_ids_to_tokens(output)
     current_msg = []
     messages = []
     for i in output:
-        if i in (speaker_self, eos):
+        if i in (speaker_self, eos, speaker_other):
             messages.append(tokenizer.convert_tokens_to_string(current_msg))
             current_msg = []
         else:
