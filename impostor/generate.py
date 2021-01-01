@@ -9,12 +9,9 @@ import torch.nn.functional as F
 import yaml
 import os
 
+from special_tokens import bos, eos, speaker_self, speaker_other, lsep, pad, SPECIAL_TOKENS
+
 config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
-
-bos, eos, speaker_self, speaker_other, lsep, pad = "<bos>", "<eos>", "<speaker_self>", "<speaker_other>", "<lsep>", "<pad>"
-
-special_tokens = {"bos_token": bos, "eos_token": eos,
-                  "additional_special_tokens": [speaker_self, speaker_other, lsep], "pad_token": pad}
 
 
 def load_model_and_tokenizer(file_path: str) -> Tuple[OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer]:

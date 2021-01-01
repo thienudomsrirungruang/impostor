@@ -5,10 +5,10 @@ from transformers import OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer
 
 from itertools import chain
 
+from special_tokens import bos, eos, speaker_self, speaker_other, lsep, pad, SPECIAL_TOKENS
+
 model = OpenAIGPTDoubleHeadsModel.from_pretrained("openai-gpt")
 tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
-
-bos, eos, speaker_self, speaker_other, lsep, pad = "<bos>", "<eos>", "<speaker_self>", "<speaker_other>", "<lsep>", "<pad>"
 
 # history = [[(True, "hello"), (True, "how"), (True, "are"), (True, "you"), (True, "?")],
 #            [(False, "i"), (False, "am"), (False, "fine"), (False, "thanks"), (False, ".")]]
@@ -17,8 +17,6 @@ history = [(True, tokenizer.tokenize("hello how are you?")),
            (False, tokenizer.tokenize("i am fine thanks."))]
 
 reply = (True, ["good", "to", "hear", "."])
-
-SPECIAL_TOKENS = {"bos_token": bos, "eos_token": eos, "additional_special_tokens": [speaker_self, speaker_other, lsep], "pad_token": pad}
 
 orig_num_tokens = len(tokenizer.encoder)
 print(orig_num_tokens)

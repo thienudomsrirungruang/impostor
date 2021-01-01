@@ -14,6 +14,8 @@ from parse_chat import parse_chat_logs
 
 from transformers import OpenAIGPTTokenizer
 
+from special_tokens import SPECIAL_TOKENS
+
 config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
 
@@ -29,9 +31,7 @@ def create_dataset(input_dir: str, output_file: str, num_candidates: int, max_hi
 
     # init tokenizer for checking
     tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
-    special_tokens = {"bos_token": "<bos>", "eos_token": "<eos>",
-                      "additional_special_tokens": ["<speaker_self>", "<speaker_other>", "<lsep>"], "pad_token": "<pad>"}
-    tokenizer.add_special_tokens(special_tokens)
+    tokenizer.add_special_tokens(SPECIAL_TOKENS)
 
     utterances_set = set()
     for parsed in parsed_logs:

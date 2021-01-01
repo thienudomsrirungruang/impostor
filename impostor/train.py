@@ -13,6 +13,8 @@ import datetime
 
 from dataset import get_dataset, get_data_loader
 
+from special_tokens import SPECIAL_TOKENS
+
 config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
 
@@ -27,13 +29,8 @@ def train(dataset_path: str):
     model.to(device)
     tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
 
-    bos, eos, speaker_self, speaker_other, lsep, pad = "<bos>", "<eos>", "<speaker_self>", "<speaker_other>", "<lsep>", "<pad>"
-
-    special_tokens = {"bos_token": bos, "eos_token": eos,
-                      "additional_special_tokens": [speaker_self, speaker_other, lsep], "pad_token": pad}
-
     orig_num_tokens = len(tokenizer.encoder)
-    num_added_tokens = tokenizer.add_special_tokens(special_tokens)
+    num_added_tokens = tokenizer.add_special_tokens(SPECIAL_TOKENS)
     model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
 
     # dataloader = get_data_loader(dataset_path, tokenizer, batch_size=4, shuffle=False, num_workers=1)

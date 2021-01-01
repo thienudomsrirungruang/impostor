@@ -8,10 +8,10 @@ from transformers import OpenAIGPTTokenizer
 from itertools import chain
 from collections import defaultdict
 
+from special_tokens import bos, eos, speaker_self, speaker_other, lsep, pad, SPECIAL_TOKENS
+
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # print("Device: {}".format(device))
-
-bos, eos, speaker_self, speaker_other = "<bos>", "<eos>", "<speaker_self>", "<speaker_other>"
 
 
 def build_inputs(history: List[Tuple[bool, List[str]]], reply: Optional[Tuple[bool, List[str]]],
@@ -94,10 +94,6 @@ def get_dataset(dataset_path: str, tokenizer: transformers.OpenAIGPTTokenizer):
 if __name__ == "__main__":
     tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
 
-    bos, eos, speaker_self, speaker_other, lsep, pad = "<bos>", "<eos>", "<speaker_self>", "<speaker_other>", "<lsep>", "<pad>"
-
-    SPECIAL_TOKENS = {"bos_token": bos, "eos_token": eos,
-                      "additional_special_tokens": [speaker_self, speaker_other, lsep], "pad_token": pad}
     orig_num_tokens = len(tokenizer.encoder)
     num_added_tokens = tokenizer.add_special_tokens(SPECIAL_TOKENS)
 
