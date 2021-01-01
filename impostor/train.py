@@ -105,7 +105,7 @@ def train(dataset_path: str):
                               epoch, epochs, iteration, epochs * (len(train_dataset) // config["train"]["batch_size"]),
                               loss.item(), lm_loss.item(), mc_loss.item()))
 
-            if datetime.datetime.now() - last_model_save > datetime.timedelta(minutes=1):
+            if datetime.datetime.now() - last_model_save > datetime.timedelta(minutes=config["train"]["save_interval_mins"]):
                 print("Saving model...")
                 torch.save(model.state_dict(), os.path.join(os.path.dirname(__file__), "checkpoints/model-{}-iter{}.pt")
                            .format(start_time.strftime("%y-%m-%d-%H-%M-%S"), iteration))
