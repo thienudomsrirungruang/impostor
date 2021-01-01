@@ -25,3 +25,4 @@ bot:
   bot_token: TOKEN_HERE
   history_limit: 10
   token_limit: 40
+  device: cuda

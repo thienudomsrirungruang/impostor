@@ -63,7 +63,8 @@ def filter_logits(logits: torch.Tensor, tokenizer: OpenAIGPTTokenizer,
 
 
 def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTTokenizer,
-                          model: OpenAIGPTDoubleHeadsModel, token_blacklist: Optional[List[str]] = None) -> List[str]:
+                          model: OpenAIGPTDoubleHeadsModel, device,
+                          token_blacklist: Optional[List[str]] = None,) -> List[str]:
     """Generates an utterance given a set of messages preceding it.
 
     :argument history: a list of tuples (user, message)
@@ -71,7 +72,10 @@ def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTT
                             message is string.
     :argument tokenizer: the tokenizer
     :argument model: the model
+    :argument device: pytorch device to run on
     :argument token_blacklist: a list of tokens to not make the network generate"""
+
+    model.to(device)
 
     # build the network inputs
     output = []
@@ -91,14 +95,14 @@ def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTT
 
     model.eval()
 
-    # eos_token = tokenizer.convert_tokens_to_ids(eos)
+    eos_token = tokenizer.convert_tokens_to_ids(eos)
     speaker_self_token = tokenizer.convert_tokens_to_ids(speaker_self)
     speaker_other_token = tokenizer.convert_tokens_to_ids(speaker_other)
 
     cutoff = 500
     for i in range(config["bot"]["token_limit"]):
-        model_out = model(torch.tensor([input_ids], dtype=torch.long)[-cutoff:],
-                          token_type_ids=torch.tensor([token_type_ids], dtype=torch.long)[-cutoff:])
+        model_out = model(torch.tensor([input_ids[-cutoff:]], dtype=torch.long).to(device),
+                          token_type_ids=torch.tensor([token_type_ids[-cutoff:]], dtype=torch.long).to(device))
         logits = model_out.logits[0, -1, :] / config["eval"]["temperature"]
         blacklist = [bos, eos, pad] + token_blacklist
         logits = filter_logits(logits, tokenizer, False, blacklist=blacklist)
@@ -109,7 +113,7 @@ def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTT
         input_ids.append(prev)
         token_type_ids.append(speaker_self_token)
         output.append(prev)
-        if prev == speaker_other_token:
+        if prev in (speaker_other_token, eos_token):
             break
 
     output = tokenizer.convert_ids_to_tokens(output)
@@ -124,6 +128,39 @@ def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTT
     if len(current_msg) > 0:
         messages.append(tokenizer.convert_tokens_to_string(current_msg))
     return messages
+
+
+def chance_reply(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTTokenizer,
+                          model: OpenAIGPTDoubleHeadsModel, device):
+    model.to(device)
+
+    # build the network inputs
+    output = []
+    inputs = [bos]
+    token_types = [speaker_other if len(history) > 0 and not history[0][0] else speaker_self]
+    for user, text in history:
+        inputs.append(speaker_self if user else speaker_other)
+        token_types.append(speaker_self if user else speaker_other)
+        for token in tokenizer.tokenize(text):
+            inputs.append(token)
+            token_types.append(speaker_self if user else speaker_other)
+
+    cutoff = 500
+    input_ids = tokenizer.convert_tokens_to_ids(inputs)
+    token_type_ids = tokenizer.convert_tokens_to_ids(token_types)
+
+    model.eval()
+
+    model_out = model(torch.tensor([input_ids[-cutoff:]], dtype=torch.long).to(device),
+                      token_type_ids=torch.tensor([token_type_ids[-cutoff:]], dtype=torch.long).to(device))
+    logits = model_out.logits[0, -1, :] / config["eval"]["temperature"]
+
+    logits = filter_logits(logits, tokenizer, True, whitelist=[speaker_self, speaker_other])
+    probs = F.softmax(logits, dim=-1)
+
+    speaker_self_token = tokenizer.convert_tokens_to_ids(speaker_self)
+
+    return probs[speaker_self_token].item()
 
 
 if __name__ == "__main__":

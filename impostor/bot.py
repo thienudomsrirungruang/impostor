@@ -2,6 +2,9 @@ from typing import *
 
 import discord
 
+import numpy as np
+import torch
+
 import yaml
 import os
 
@@ -9,7 +12,7 @@ import logging
 
 import re
 
-from generate import generate_from_history, load_model_and_tokenizer
+from generate import generate_from_history, load_model_and_tokenizer, chance_reply
 
 from special_tokens import photo, call, video, voice, sticker
 
@@ -29,6 +32,8 @@ class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model, self.tokenizer = load_model_and_tokenizer(config["eval"]["model_path"])
+        # TODO: customisable prefix
+        self.prefix = ","
 
     async def on_ready(self):
         print("Ready, logged in as {}".format(self.user))
@@ -36,20 +41,33 @@ class Bot(discord.Client):
     async def on_message(self, message: discord.Message):
         print("Received message: {}".format(message.content))
         channel = message.channel
-        if message.author.id == self.user.id or message.author.bot or re.match(likely_command_regex, message.content):
-            print("Skipping")
-            return
+        force_reply = False
+        if message.content.startswith(self.prefix):
+            command = message.content[len(self.prefix):]
+            if command == "forcereply":
+                force_reply = True
+            else:
+                await channel.send("^^Command not recognized.")
+                return
+        else:
+            if message.author.id == self.user.id or message.author.bot or re.match(likely_command_regex, message.content):
+                print("Skipping")
+                return
         history = await channel.history(limit=config["bot"]["history_limit"]).flatten()
         history.reverse()
         # filter bots except itself, and likely commands
         history = filter(lambda x: (not x.author.bot or x.author.id == self.user.id) and
                         (not re.match(likely_command_regex, x.content)), history)
         history = list(map(lambda x: (x.author.id == self.user.id, x.content), history))
-        print(history)
-        reply = generate_from_history(history, self.tokenizer, self.model,
-                                      token_blacklist=[photo, call, video, voice, sticker])
-        for x in reply:
-            await channel.send(x)
+        reply_chance = chance_reply(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]))
+        if force_reply or np.random.binomial(1, reply_chance):
+            print("Replying")
+            reply = generate_from_history(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]),
+                                          token_blacklist=[photo, call, video, voice, sticker])
+            for x in reply:
+                await channel.send(x)
+        else:
+            print("Not replying")
 
 
 if __name__ == "__main__":
