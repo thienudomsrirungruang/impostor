@@ -11,6 +11,8 @@ import re
 
 from generate import generate_from_history, load_model_and_tokenizer
 
+from special_tokens import photo, call, video, voice, sticker
+
 config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
 logger = logging.getLogger("discord")
@@ -44,7 +46,8 @@ class Bot(discord.Client):
                         (not re.match(likely_command_regex, x.content)), history)
         history = list(map(lambda x: (x.author.id == self.user.id, x.content), history))
         print(history)
-        reply = generate_from_history(history, self.tokenizer, self.model)
+        reply = generate_from_history(history, self.tokenizer, self.model,
+                                      token_blacklist=[photo, call, video, voice, sticker])
         for x in reply:
             await channel.send(x)
 
