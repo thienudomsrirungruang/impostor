@@ -19,7 +19,7 @@ config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yam
 
 
 def train(dataset_path: str):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(config["train"]["device"])
 
     print("Device: {}".format(device))
 

@@ -6,6 +6,7 @@ dataset:
   max_history: 4
   max_message_length: 128
 train:
+  device: cpu
   batch_size: 4
   num_epochs: 3
   train_dataset_proportion: 0.95
