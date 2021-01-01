@@ -20,7 +20,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 
-likely_command_regex = r"^[\;\?\!\^\~\>][a-zA-Z].*|[a-zA-Z\;\?\!\^\~\>][\;\?\!\^\~\>][a-zA-Z].*$"
+likely_command_regex = r"^[\;\?\!\^\~\>\.\,\-\$\=][a-zA-Z].*|[a-zA-Z\;\?\!\^\~\>\.\,\-\$\=][\;\?\!\^\~\>\.\,\-\$\=][a-zA-Z].*$"
 
 
 class Bot(discord.Client):
