@@ -49,9 +49,9 @@ def evaluate_model(model: OpenAIGPTDoubleHeadsModel, test_loader: torch.utils.da
         lm_logits = model_output.logits[0][mc_answer]
         lm_answer = lm_labels[0][mc_answer]
         for i in range(len(lm_answer)):
-            if lm_answer[i] == -100:
+            if lm_answer[i] == -100 or i == 0:
                 continue
-            guess = torch.topk(lm_logits[i], 1).indices[0].item()
+            guess = torch.topk(lm_logits[i-1], 1).indices[0].item()
             if guess == lm_answer[i]:
                 lm_correct += 1
             lm_tested += 1
