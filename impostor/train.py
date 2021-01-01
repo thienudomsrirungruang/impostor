@@ -121,7 +121,7 @@ def train(dataset_path: str):
 
             if iteration % eval_every == 0:
                 results = evaluate_model(model, test_loader, device, num_tests)
-                add_log(save_path, "test,{0}{1}{2[mc_correct]}{2[num_tests]}{2[lm_correct]}{2[lm_tested]}\n"
+                add_log(save_path, "test,{0},{1},{2[mc_correct]},{2[num_tests]},{2[lm_correct]},{2[lm_tested]}\n"
                                    .format(iteration, epoch, results))
 
             model.train()
