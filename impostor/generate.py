@@ -99,7 +99,7 @@ def generate_from_history(history: List[Tuple[bool, str]], tokenizer: OpenAIGPTT
     speaker_self_token = tokenizer.convert_tokens_to_ids(speaker_self)
     speaker_other_token = tokenizer.convert_tokens_to_ids(speaker_other)
 
-    cutoff = 500
+    cutoff = config["bot"]["max_token_history"]
     for i in range(config["bot"]["token_limit"]):
         model_out = model(torch.tensor([input_ids[-cutoff:]], dtype=torch.long).to(device),
                           token_type_ids=torch.tensor([token_type_ids[-cutoff:]], dtype=torch.long).to(device))

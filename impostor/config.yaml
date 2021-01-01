@@ -25,4 +25,5 @@ bot:
   bot_token: TOKEN_HERE
   history_limit: 10
   token_limit: 40
+  max_token_history: 200
   device: cuda
