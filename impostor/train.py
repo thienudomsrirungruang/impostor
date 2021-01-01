@@ -29,7 +29,8 @@ def evaluate_model(model: OpenAIGPTDoubleHeadsModel, test_loader: torch.utils.da
     for batch in test_loader:
         if test_num == num_tests:
             break
-        print("Test number {}/{}".format(test_num, num_tests))
+        if test_num % 20 == 0:
+            print("Test number {}/{}".format(test_num, num_tests))
 
         model.eval()
         input_ids = batch["input_ids"].to(device)
