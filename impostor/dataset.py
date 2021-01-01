@@ -49,9 +49,10 @@ class ChatDataset(Dataset):
         for i, candidate in enumerate(self._dataset_object["candidates"][idx]):
             candidate = (candidate[0], tokenizer.tokenize(candidate[1]))
             input_ids, mc_token_ids, token_type_ids, lm_labels = build_inputs(history, candidate, tokenizer, i == correct)
-            out["input_ids"].append(input_ids)
+            # cutoff at -500 to prevent overflow
+            out["input_ids"].append(input_ids[-500:])
             out["mc_token_ids"].append(mc_token_ids)
-            out["token_type_ids"].append(token_type_ids)
+            out["token_type_ids"].append(token_type_ids[-500:])
             out["lm_labels"].append(lm_labels)
         return out
 
