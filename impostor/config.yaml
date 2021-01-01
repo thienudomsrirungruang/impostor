@@ -15,6 +15,8 @@ train:
   mc_coeff: 1.0
   max_norm: 1
   save_interval_mins: 15
+  evaluate_interval_iters: 4000
+  num_tests: 100
 eval:
   model_path: checkpoints/model-20-12-22-13-00-17-iter14321.pt
   temperature: 0.7

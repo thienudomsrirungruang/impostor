@@ -18,6 +18,57 @@ from special_tokens import SPECIAL_TOKENS
 config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
 
+def evaluate_model(model: OpenAIGPTDoubleHeadsModel, test_loader: torch.utils.data.DataLoader, device,
+                   num_tests: int = 100):
+    num_tests = min(num_tests, len(test_loader))
+    print("Evaluating on {} tests".format(num_tests))
+    test_num = 0
+    mc_correct = 0
+    lm_tested = 0
+    lm_correct = 0
+    for batch in test_loader:
+        if test_num == num_tests:
+            break
+        print("Test number {}/{}".format(test_num, num_tests))
+
+        model.eval()
+        input_ids = batch["input_ids"].to(device)
+        mc_token_ids = batch["mc_token_ids"].to(device)
+        token_type_ids = batch["token_type_ids"].to(device)
+        lm_labels = batch["lm_labels"].to(device)
+        mc_labels = batch["correct"].to(device)
+        try:
+            model_output = model(input_ids, token_type_ids=token_type_ids, mc_token_ids=mc_token_ids)
+        except Exception as e:
+            print(input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, sep="\n")
+            raise e
+        mc_logits = model_output.mc_logits
+        mc_guess = torch.topk(mc_logits[0], 1).indices[0].item()
+        mc_answer = mc_labels[0].item()
+        lm_logits = model_output.logits[0][mc_answer]
+        lm_answer = lm_labels[0][mc_answer]
+        for i in range(len(lm_answer)):
+            if lm_answer[i] == -100:
+                continue
+            guess = torch.topk(lm_logits[i], 1).indices[0].item()
+            if guess == lm_answer[i]:
+                lm_correct += 1
+            lm_tested += 1
+        if mc_guess == mc_answer:
+            mc_correct += 1
+
+        test_num += 1
+    print("MC: {}/{}, LM: {}/{}".format(mc_correct, num_tests, lm_correct, lm_tested))
+    return {"mc_correct": mc_correct, "num_tests": num_tests, "lm_correct": lm_correct, "lm_tested": lm_tested}
+
+
+def add_log(save_path: str, log_text: str):
+    log_file = open(save_path, "a")
+    log_file.write(log_text)
+    log_file.flush()
+    log_file.close()
+
+
 def train(dataset_path: str):
     device = torch.device(config["train"]["device"])
 
@@ -52,17 +103,26 @@ def train(dataset_path: str):
 
     # init logging
     start_time = datetime.datetime.now()
-    last_model_save = start_time
     save_path = os.path.join(os.path.dirname(__file__), "log/log-{}.txt".format(start_time.strftime("%y-%m-%d-%H-%M-%S")))
     print(os.path.dirname(__file__), save_path)
     f = open(save_path, "w+")
     f.close()
 
     epochs = config["train"]["num_epochs"]
+    eval_every = config["train"]["evaluate_interval_iters"]
+    num_tests = config["train"]["num_tests"]
+    last_model_save = datetime.datetime.now()
     iteration = 0
+
     for epoch in range(epochs):
         print("Starting epoch {}/{}".format(epoch, epochs))
         for batch in train_loader:
+
+            if iteration % eval_every == 0:
+                results = evaluate_model(model, test_loader, device, num_tests)
+                add_log(save_path, "test,{0}{1}{2[mc_correct]}{2[num_tests]}{2[lm_correct]}{2[lm_tested]}\n"
+                                   .format(iteration, epoch, results))
+
             model.train()
             input_ids = batch["input_ids"].to(device)
             mc_token_ids = batch["mc_token_ids"].to(device)
@@ -86,11 +146,7 @@ def train(dataset_path: str):
 
             loss = lm_loss * config["train"]["lm_coeff"] + mc_loss * config["train"]["mc_coeff"]
 
-            # logging
-            log_file = open(save_path, "a")
-            log_file.write("{},{},{},{},{}\n".format(iteration, epoch, loss, lm_loss, mc_loss))
-            log_file.flush()
-            log_file.close()
+            add_log(save_path, "train,{},{},{},{},{}\n".format(iteration, epoch, loss, lm_loss, mc_loss))
 
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), config["train"]["max_norm"])
