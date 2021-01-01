@@ -60,6 +60,8 @@ class Bot(discord.Client):
                         (not re.match(likely_command_regex, x.content)), history)
         history = list(map(lambda x: (x.author.id == self.user.id, x.content), history))
         reply_chance = chance_reply(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]))
+        print("Chance: {:.03f}".format(reply_chance))
+        print(history)
         if force_reply or np.random.binomial(1, reply_chance):
             print("Replying")
             reply = generate_from_history(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]),
