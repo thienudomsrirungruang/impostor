@@ -3,7 +3,7 @@ chat_log_directory: ../data/raw-history/
 dataset:
   file: ../dataset/chat-set.pt
   num_candidates: 3
-  max_history: 4
+  max_history: 10
   max_message_length: 128
 train:
   device: cpu
