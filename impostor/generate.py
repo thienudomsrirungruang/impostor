@@ -19,7 +19,7 @@ def load_model_and_tokenizer(file_path: str) -> Tuple[OpenAIGPTDoubleHeadsModel,
     tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
 
     orig_num_tokens = len(tokenizer.encoder)
-    num_added_tokens = tokenizer.add_special_tokens(special_tokens)
+    num_added_tokens = tokenizer.add_special_tokens(SPECIAL_TOKENS)
     model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
 
     model.load_state_dict(torch.load(file_path))
