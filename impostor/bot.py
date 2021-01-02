@@ -1,6 +1,7 @@
 from typing import *
 
 import discord
+from discord.ext import tasks
 
 import numpy as np
 import torch
@@ -11,6 +12,9 @@ import os
 import logging
 
 import re
+
+import random
+
 
 from generate import generate_from_history, load_model_and_tokenizer, chance_reply
 
@@ -27,6 +31,8 @@ logger.addHandler(handler)
 
 likely_command_regex = r"^[\;\?\!\^\~\>\.\,\-\$\=][a-zA-Z].*|[a-zA-Z\;\?\!\^\~\>\.\,\-\$\=][\;\?\!\^\~\>\.\,\-\$\=][a-zA-Z].*$"
 
+status_messages = ["hi!", "hello!", "hey", "how are you?"]
+
 
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -41,6 +47,12 @@ class Bot(discord.Client):
 
     async def on_ready(self):
         print("Ready, logged in as {}".format(self.user))
+        self.update_status.start()
+
+    @tasks.loop(minutes=config["bot"]["update_status_interval_mins"])
+    async def update_status(self):
+        print("update")
+        await self.change_presence(activity=discord.Game(name=",help | {}".format(random.choice(status_messages))))
 
     async def on_message(self, message: discord.Message):
         print("Received message: {}".format(message.content))

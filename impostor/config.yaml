@@ -27,3 +27,4 @@ bot:
   token_limit: 40
   max_token_history: 200
   device: cuda
+  update_status_interval_mins: 15
