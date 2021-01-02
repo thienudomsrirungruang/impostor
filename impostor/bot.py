@@ -62,6 +62,11 @@ class Bot(discord.Client):
             command = message.content[len(self.prefix):]
             if command == "forcereply":
                 force_reply = True
+            elif command == "help":
+                embed = discord.Embed(title="Help",
+                                      description="{0}forcereply: Forces the bot to reply.".format(self.prefix))
+                await channel.send(embed=embed)
+                # await channel.send("^^\nHelp:\n{0}forcereply: Forces the bot to reply.".format(self.prefix))
             else:
                 await channel.send("^^Command not recognized.")
                 return
