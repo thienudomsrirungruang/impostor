@@ -55,7 +55,7 @@ class Bot(discord.Client):
         await self.change_presence(activity=discord.Game(name=",help | {}".format(random.choice(status_messages))))
 
     async def on_message(self, message: discord.Message):
-        print("Received message: {}".format(message.content))
+        print("Received message from {}: {}".format(message.author.name, message.content))
         channel = message.channel
         force_reply = False
         if message.content.startswith(self.prefix):
@@ -66,7 +66,7 @@ class Bot(discord.Client):
                 embed = discord.Embed(title="Help",
                                       description="{0}forcereply: Forces the bot to reply.".format(self.prefix))
                 await channel.send(embed=embed)
-                # await channel.send("^^\nHelp:\n{0}forcereply: Forces the bot to reply.".format(self.prefix))
+                return
             else:
                 await channel.send("^^Command not recognized.")
                 return
