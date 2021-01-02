@@ -34,6 +34,10 @@ class Bot(discord.Client):
         self.model, self.tokenizer = load_model_and_tokenizer(config["eval"]["model_path"])
         # TODO: customisable prefix
         self.prefix = ","
+        # eagerness is how often the bot will reply to messages
+        self.eagerness = 2.3
+        self.interactivity = 0.4
+        self.since_last_reply = 0
 
     async def on_ready(self):
         print("Ready, logged in as {}".format(self.user))
@@ -60,16 +64,19 @@ class Bot(discord.Client):
                         (not re.match(likely_command_regex, x.content)), history)
         history = list(map(lambda x: (x.author.id == self.user.id, x.content), history))
         reply_chance = chance_reply(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]))
-        print("Chance: {:.03f}".format(reply_chance))
+        probability = 1 - np.exp(-self.interactivity * self.since_last_reply) * ((1 - reply_chance) ** self.eagerness)
+        print("Chance: {:.03f} Probability: {:.03f}".format(reply_chance, probability))
         print(history)
-        if force_reply or np.random.binomial(1, reply_chance):
+        if force_reply or np.random.binomial(1, probability):
             print("Replying")
             reply = generate_from_history(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]),
                                           token_blacklist=[photo, call, video, voice, sticker])
             for x in reply:
                 await channel.send(x)
+            self.since_last_reply = 0
         else:
             print("Not replying")
+            self.since_last_reply += 1
 
 
 if __name__ == "__main__":
