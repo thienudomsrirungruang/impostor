@@ -37,7 +37,7 @@ likely_command_regex = r"^[\;\?\!\^\~\>\.\,\-\$\=][a-zA-Z].*|[a-zA-Z\;\?\!\^\~\>
 status_messages = ["hi!", "hello!", "hey", "uwu", "bruh", "owo", "lmao", "ye", "yeet", "i like trains", "hmmmmmmmm",
                    "well...", "how", "what"]
 
-conversation_presets = {"rarely": (0.03, 0.0), "sometimes": (0.1, 0.0), "often": (1.0, 0.1),
+conversation_presets = {"never": (0.0, 0.0), "rarely": (0.03, 0.0), "sometimes": (0.1, 0.0), "often": (1.0, 0.1),
                         "conversational": (3.0, 1.4), "always": (1000.0, 1000.0)}
 
 
@@ -52,6 +52,7 @@ help_text = """`{0}help`: Shows this message.
 > - `eagerness` (0 to 1000) modifies the base value of probability.
 > - `interactivity` (0 to 1000) modifies the increased chance of replying after a message is ignored.
 > Preset values:
+> - `never`: 0.0 / 0.0
 > - `rarely`: 0.03 / 0.0
 > - `sometimes`: 0.1 / 0.0
 > - `often`: 1.0 / 0.1
