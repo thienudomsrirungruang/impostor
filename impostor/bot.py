@@ -1,3 +1,4 @@
+import string
 from typing import *
 
 import discord
@@ -96,18 +97,38 @@ class Bot(discord.Client):
         since_last_reply = chat_obj.since_last_reply
         print("prefix: {} eagerness: {} interactivity: {} since_last_reply: {}"
               .format(prefix, eagerness, interactivity, since_last_reply))
+        # Commands
         force_reply = False
         if message.content.startswith(prefix):
-            command = message.content[len(prefix):]
-            if command == "forcereply":
+            command = message.content[len(prefix):].strip()
+            split_command = command.split(" ")
+            keyword = split_command[0]
+            clean_prefix = prefix + " " if prefix[-1] in string.ascii_letters else prefix
+            if keyword == "forcereply":
                 force_reply = True
-            elif command == "help":
+            elif keyword == "help":
                 embed = discord.Embed(title="Help",
-                                      description=help_text.format(prefix))
+                                      description=help_text.format(clean_prefix))
                 await channel.send(embed=embed)
                 return
+            elif keyword == "options":
+                if split_command[1] == "prefix":
+                    new_prefix = " ".join(split_command[2:])
+                    if len(new_prefix) > 8:
+                        await channel.send("^^Prefix is too long. Max length is 8 characters.")
+                    elif len(new_prefix) == 0:
+                        await channel.send("^^Prefix cannot be empty!")
+                    else:
+                        if channel.type == discord.ChannelType.text:
+                            self.database_accessor.set_guild_prefix(channel.guild.id, new_prefix)
+                        else:
+                            self.database_accessor.set_chat_prefix(channel.id, new_prefix)
+                        await channel.send("^^Success! Prefix changed to `{0}`".format(new_prefix))
+                else:
+                    await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
+                return
             else:
-                await channel.send("^^Command not recognized.")
+                await channel.send("^^Command not recognized. Please type `{0}help` for more info.".format(clean_prefix))
                 return
         else:
             if message.author.id == self.user.id or message.author.bot or re.match(likely_command_regex, message.content):
