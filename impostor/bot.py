@@ -47,7 +47,7 @@ help_text = """`{0}help`: Shows this message.
 `{0}options prefix`: Changes the prefix.
 `{0}options mode`: Sets how often the bot should reply.
 > `{0}options mode default` (servers only) - uses the server default (see `options smode`).
-> `{0}options mode [rarely|sometimes|often|conversational|always]` - presets (default `often` for servers, `conversational` for dms)
+> `{0}options mode [rarely|sometimes|often|conversational|always]` - presets (default `often` for servers, `often` for dms)
 > `{0}options mode <eagerness> <interactivity>`:
 > - `eagerness` (0 to 1000) modifies the base value of probability.
 > - `interactivity` (0 to 1000) modifies the increased chance of replying after a message is ignored.
