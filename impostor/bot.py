@@ -31,19 +31,15 @@ logger.addHandler(handler)
 
 likely_command_regex = r"^[\;\?\!\^\~\>\.\,\-\$\=][a-zA-Z].*|[a-zA-Z\;\?\!\^\~\>\.\,\-\$\=][\;\?\!\^\~\>\.\,\-\$\=][a-zA-Z].*$"
 
-status_messages = ["hi!", "hello!", "hey", "how are you?"]
+status_messages = ["hi!", "hello!", "hey", "uwu", "bruh", "owo", "lmao", "ye", "yeet", "i like trains", "hmmmmmmmm",
+                   "well...", "how", "what"]
 
 
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model, self.tokenizer = load_model_and_tokenizer(config["eval"]["model_path"])
-        # TODO: customisable prefix
-        self.prefix = ","
-        # eagerness is how often the bot will reply to messages
-        self.eagerness = 2.3
-        self.interactivity = 0.4
-        self.since_last_reply = 0
+        self.database_accessor = DatabaseAccessor()
 
     async def on_ready(self):
         print("Ready, logged in as {}".format(self.user))
@@ -57,14 +53,47 @@ class Bot(discord.Client):
     async def on_message(self, message: discord.Message):
         print("Received message from {}: {}".format(message.author.name, message.content))
         channel = message.channel
+        # check for prefix/eagerness/interactivity/since_last_reply
+        if channel.type == discord.ChannelType.text:
+            # create guild if doesn't exist
+            if not self.database_accessor.guild_exists(channel.guild.id):
+                print("no guild, creating")
+                self.database_accessor.add_guild(channel.guild.id, channel.guild.name)
+            # create chat if doesn't exist
+            if not self.database_accessor.chat_exists(channel.id):
+                print("no chat, creating")
+                self.database_accessor.add_chat(channel.id, True, "text", channel.guild.id, channel.name)
+            guild_obj = self.database_accessor.get_guild_by_id(channel.guild.id)
+            chat_obj = self.database_accessor.get_chat_by_id(channel.id)
+            if chat_obj.override_chat_settings:
+                eagerness, interactivity = chat_obj.eagerness, chat_obj.interactivity
+            else:
+                eagerness, interactivity = guild_obj.eagerness, guild_obj.interactivity
+            prefix = guild_obj.prefix
+        elif channel.type in (discord.ChannelType.private, discord.ChannelType.group):
+            # create chat if doesn't exist
+            if not self.database_accessor.chat_exists(channel.id):
+                self.database_accessor.add_chat(channel.id, False,
+                                                "private" if channel.type == discord.ChannelType.private else "group",
+                                                None,
+                                                channel.recipient.name if channel.type == discord.ChannelType.private
+                                                else channel.name)
+            chat_obj = self.database_accessor.get_chat_by_id(channel.id)
+            eagerness, interactivity = chat_obj.eagerness, chat_obj.interactivity
+            prefix = chat_obj.prefix
+        else:
+            raise NotImplementedError("Channel type not implemented: {}".format(str(channel.type)))
+        since_last_reply = chat_obj.since_last_reply
+        print("prefix: {} eagerness: {} interactivity: {} since_last_reply: {}"
+              .format(prefix, eagerness, interactivity, since_last_reply))
         force_reply = False
-        if message.content.startswith(self.prefix):
-            command = message.content[len(self.prefix):]
+        if message.content.startswith(prefix):
+            command = message.content[len(prefix):]
             if command == "forcereply":
                 force_reply = True
             elif command == "help":
                 embed = discord.Embed(title="Help",
-                                      description="{0}forcereply: Forces the bot to reply.".format(self.prefix))
+                                      description="{0}forcereply: Forces the bot to reply.".format(prefix))
                 await channel.send(embed=embed)
                 return
             else:
@@ -81,19 +110,19 @@ class Bot(discord.Client):
                         (not re.match(likely_command_regex, x.content)), history)
         history = list(map(lambda x: (x.author.id == self.user.id, x.content), history))
         reply_chance = chance_reply(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]))
-        probability = 1 - np.exp(-self.interactivity * self.since_last_reply) * ((1 - reply_chance) ** self.eagerness)
+        probability = 1 - np.exp(-interactivity * since_last_reply) * ((1 - reply_chance) ** eagerness)
         print("Chance: {:.03f} Probability: {:.03f}".format(reply_chance, probability))
-        print(history)
         if force_reply or np.random.binomial(1, probability):
-            print("Replying")
-            reply = generate_from_history(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]),
-                                          token_blacklist=[photo, call, video, voice, sticker])
-            for x in reply:
-                await channel.send(x)
-            self.since_last_reply = 0
+            async with channel.typing():
+                print("Replying")
+                reply = generate_from_history(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]),
+                                              token_blacklist=[photo, call, video, voice, sticker])
+                for x in reply:
+                    await channel.send(x)
+                self.database_accessor.set_since_last_reply(channel.id, 0)
         else:
             print("Not replying")
-            self.since_last_reply += 1
+            self.database_accessor.increment_last_reply(channel.id)
 
 
 if __name__ == "__main__":

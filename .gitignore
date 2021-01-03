@@ -5,6 +5,7 @@ dataset/
 .idea/workspace.xml
 impostor/checkpoints/
 impostor/log/
+db/
 
 
 # Byte-compiled / optimized / DLL files
