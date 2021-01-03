@@ -55,6 +55,8 @@ set_guild_prefix_sql = """UPDATE guild SET prefix=? WHERE id=?"""
 
 set_chat_eagerness_interactivity_sql = """UPDATE chat SET eagerness=?, interactivity=? WHERE id=?"""
 
+set_chat_override_sql = """UPDATE chat SET override_chat_settings=? WHERE id=?"""
+
 set_guild_eagerness_interactivity_sql = """UPDATE guild SET eagerness=?, interactivity=? WHERE id=?"""
 
 get_since_last_reply_sql = """SELECT since_last_reply FROM chat WHERE id=?"""
@@ -147,6 +149,10 @@ class DatabaseAccessor:
 
     def set_chat_eagerness_interactivity(self, chat_id: int, eagerness: float, interactivity: float):
         self.c.execute(set_chat_eagerness_interactivity_sql, (eagerness, interactivity, chat_id))
+        self.conn.commit()
+
+    def set_chat_override(self, chat_id: int, override: bool):
+        self.c.execute(set_chat_override_sql, (override, chat_id))
         self.conn.commit()
 
     def set_guild_eagerness_interactivity(self, guild_id: int, eagerness: float, interactivity: float):

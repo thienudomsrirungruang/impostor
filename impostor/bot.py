@@ -37,12 +37,26 @@ likely_command_regex = r"^[\;\?\!\^\~\>\.\,\-\$\=][a-zA-Z].*|[a-zA-Z\;\?\!\^\~\>
 status_messages = ["hi!", "hello!", "hey", "uwu", "bruh", "owo", "lmao", "ye", "yeet", "i like trains", "hmmmmmmmm",
                    "well...", "how", "what"]
 
+conversation_presets = {"rarely": (0.03, 0.0), "sometimes": (0.1, 0.0), "often": (1.0, 0.1),
+                        "conversational": (3.0, 1.4), "always": (1000.0, 1000.0)}
+
 
 help_text = """`{0}help`: Shows this message.
 `{0}forcereply`: Forces the bot to reply.
 `{0}forget`: Makes the chatbot forget everything and start fresh.
 `{0}options prefix`: Changes the prefix.
-`{0}options mode`: [WIP]
+`{0}options mode`: Sets how often the bot should reply.
+> `{0}options mode default` (servers only) - uses the server default (see `options smode`).
+> `{0}options mode [rarely|sometimes|often|conversational|always]` - presets (default `often` for servers, `conversational` for dms)
+> `{0}options mode <eagerness> <interactivity>`:
+> - `eagerness` (0 to 1000) modifies the base value of probability.
+> - `interactivity` (0 to 1000) modifies the increased chance of replying after a message is ignored.
+> Preset values:
+> - `rarely`: 0.03 / 0.0
+> - `sometimes`: 0.1 / 0.0
+> - `often`: 1.0 / 0.1
+> - `conversational`: 3.0 / 1.4
+> - `always`: 1000.0 / 1000.0
 `{0}options smode`: [WIP]"""
 
 
@@ -117,6 +131,8 @@ class Bot(discord.Client):
                 self.database_accessor.reset_last_forget_chat(channel.id)
                 return
             elif keyword == "options":
+                if len(split_command) <= 1:
+                    await channel.send("^^Command not recognized. Please type `{0}help` for more info.".format(clean_prefix))
                 if split_command[1] == "prefix":
                     new_prefix = " ".join(split_command[2:])
                     if len(new_prefix) > 8:
@@ -129,11 +145,42 @@ class Bot(discord.Client):
                         else:
                             self.database_accessor.set_chat_prefix(channel.id, new_prefix)
                         await channel.send("^^Success! Prefix changed to `{0}`".format(new_prefix))
+                elif split_command[1] == "mode":
+                    if len(split_command) == 2:
+                        await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
+                    elif len(split_command) == 3:
+                        if split_command[2] == "default":
+                            if channel.type == discord.ChannelType.text:
+                                self.database_accessor.set_chat_override(channel.id, False)
+                                await channel.send("^^Success! Options reset to server default.")
+                            else:
+                                await channel.send("^^This command is only available on servers.")
+                        else:
+                            for preset, values in conversation_presets.items():
+                                if split_command[2] == preset:
+                                    self.database_accessor.set_chat_eagerness_interactivity(channel.id, *values)
+                                    if channel.type == discord.ChannelType.text:
+                                        self.database_accessor.set_chat_override(channel.id, True)
+                                    await channel.send("^^Success! Options set to {}.".format(preset))
+                                    break
+                            else:
+                                await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
+                    else:
+                        try:
+                            eagerness = float(split_command[2])
+                            interactivity = float(split_command[3])
+                            if not (0 <= eagerness <= 1000 and 0 <= interactivity <= 1000):
+                                await channel.send("^^Eagerness and interactivity values must be between 0 and 1000 inclusive.")
+                            else:
+                                self.database_accessor.set_chat_eagerness_interactivity(channel.id, eagerness, interactivity)
+                                await channel.send("^^Success! Eagerness set to {} and interactivity set to {}.".format(eagerness, interactivity))
+                        except ValueError:
+                            await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
                 else:
                     await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
                 return
             else:
-                await channel.send("^^Command not recognized. Please type `{0}help` for more info.".format(clean_prefix))
+                await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
                 return
         else:
             if message.author.id == self.user.id or message.author.bot or re.match(likely_command_regex, message.content):
@@ -149,7 +196,8 @@ class Bot(discord.Client):
         history = list(map(lambda x: (x.author.id == self.user.id, x.content), history))
         print("History length: {}".format(len(history)))
         reply_chance = chance_reply(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]))
-        probability = 1 - np.exp(-interactivity * since_last_reply) * ((1 - reply_chance) ** eagerness)
+        # probability = 1 - np.exp(-interactivity * since_last_reply) * ((1 - reply_chance) ** eagerness)
+        probability = 1 - (1 - reply_chance) ** (eagerness + since_last_reply * interactivity)
         print("Chance: {:.03f} Probability: {:.03f}".format(reply_chance, probability))
         if force_reply or np.random.binomial(1, probability):
             async with channel.typing():
