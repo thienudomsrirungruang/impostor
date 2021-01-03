@@ -17,8 +17,8 @@ ddl_chat = """CREATE TABLE IF NOT EXISTS chat (
     name varchar(1024) NOT NULL,
     last_forget datetime,
     prefix varchar(8) DEFAULT ",",
-    eagerness real DEFAULT 2.3,
-    interactivity real DEFAULT 0.4,
+    eagerness real DEFAULT 3.0,
+    interactivity real DEFAULT 1.4,
     override_chat_settings boolean DEFAULT false,
     since_last_reply integer DEFAULT 0,
     FOREIGN KEY (guild_id) REFERENCES guild (id)
