@@ -5,7 +5,7 @@ import os
 
 import sqlite3
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
@@ -130,7 +130,9 @@ class DatabaseAccessor:
                           None if chat[5] is None else datetime.strptime(chat[5], "%Y-%m-%d %H:%M:%S"), *chat[6:])
 
     def reset_last_forget_chat(self, chat_id: int):
-        self.c.execute(reset_last_forget_chat_sql, (datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S"), chat_id))
+        self.c.execute(reset_last_forget_chat_sql, (datetime.strftime(datetime.now(timezone.utc), "%Y-%m-%d %H:%M:%S"),
+                                                    chat_id))
+        self.set_since_last_reply(chat_id, 0)
         self.conn.commit()
 
     def set_chat_prefix(self, chat_id: int, prefix: str):

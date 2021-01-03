@@ -40,8 +40,8 @@ status_messages = ["hi!", "hello!", "hey", "uwu", "bruh", "owo", "lmao", "ye", "
 
 help_text = """`{0}help`: Shows this message.
 `{0}forcereply`: Forces the bot to reply.
-`{0}forget`: Makes the chatbot forget everything and start fresh. [WIP]
-`{0}options prefix`: Changes the prefix. [WIP]
+`{0}forget`: Makes the chatbot forget everything and start fresh.
+`{0}options prefix`: Changes the prefix.
 `{0}options mode`: [WIP]
 `{0}options smode`: [WIP]"""
 
@@ -64,7 +64,7 @@ class Bot(discord.Client):
     async def on_message(self, message: discord.Message):
         print("Received message from {}: {}".format(message.author.name, message.content))
         channel = message.channel
-        # check for prefix/eagerness/interactivity/since_last_reply
+        # check for prefix/eagerness/interactivity/since_last_reply/last_forget
         if channel.type == discord.ChannelType.text:
             # create guild if doesn't exist
             if not self.database_accessor.guild_exists(channel.guild.id):
@@ -95,8 +95,9 @@ class Bot(discord.Client):
         else:
             raise NotImplementedError("Channel type not implemented: {}".format(str(channel.type)))
         since_last_reply = chat_obj.since_last_reply
-        print("prefix: {} eagerness: {} interactivity: {} since_last_reply: {}"
-              .format(prefix, eagerness, interactivity, since_last_reply))
+        last_forget = chat_obj.last_forget
+        print("prefix: {} eagerness: {} interactivity: {} since_last_reply: {} last_forget: {}"
+              .format(prefix, eagerness, interactivity, since_last_reply, last_forget))
         # Commands
         force_reply = False
         if message.content.startswith(prefix):
@@ -110,6 +111,10 @@ class Bot(discord.Client):
                 embed = discord.Embed(title="Help",
                                       description=help_text.format(clean_prefix))
                 await channel.send(embed=embed)
+                return
+            elif keyword == "forget":
+                await channel.send("^^I have forgotten everything before this message!")
+                self.database_accessor.reset_last_forget_chat(channel.id)
                 return
             elif keyword == "options":
                 if split_command[1] == "prefix":
@@ -138,8 +143,11 @@ class Bot(discord.Client):
         history.reverse()
         # filter bots except itself, and likely commands
         history = filter(lambda x: (not x.author.bot or x.author.id == self.user.id) and
-                        (not re.match(likely_command_regex, x.content)), history)
+                         not re.match(likely_command_regex, x.content) and
+                         (last_forget is None or x.created_at > last_forget),
+                         history)
         history = list(map(lambda x: (x.author.id == self.user.id, x.content), history))
+        print("History length: {}".format(len(history)))
         reply_chance = chance_reply(history, self.tokenizer, self.model, torch.device(config["bot"]["device"]))
         probability = 1 - np.exp(-interactivity * since_last_reply) * ((1 - reply_chance) ** eagerness)
         print("Chance: {:.03f} Probability: {:.03f}".format(reply_chance, probability))
