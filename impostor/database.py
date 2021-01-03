@@ -29,7 +29,7 @@ ddl_guild = """CREATE TABLE IF NOT EXISTS guild (
     name varchar(1024) NOT NULL,
     prefix varchar(8) DEFAULT ",",
     eagerness real DEFAULT 1,
-    interactivity real DEFAULT 0
+    interactivity real DEFAULT 0.1
 );"""
 
 add_guild_sql = """INSERT INTO guild (id, name) VALUES (?, ?);"""
