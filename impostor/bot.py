@@ -20,6 +20,8 @@ from generate import generate_from_history, load_model_and_tokenizer, chance_rep
 
 from special_tokens import photo, call, video, voice, sticker
 
+from database import DatabaseAccessor
+
 config = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), "config.yaml")))
 
 logger = logging.getLogger("discord")
