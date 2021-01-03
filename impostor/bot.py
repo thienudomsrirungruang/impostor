@@ -37,6 +37,14 @@ status_messages = ["hi!", "hello!", "hey", "uwu", "bruh", "owo", "lmao", "ye", "
                    "well...", "how", "what"]
 
 
+help_text = """`{0}help`: Shows this message.
+`{0}forcereply`: Forces the bot to reply.
+`{0}forget`: Makes the chatbot forget everything and start fresh. [WIP]
+`{0}options prefix`: Changes the prefix. [WIP]
+`{0}options mode`: [WIP]
+`{0}options smode`: [WIP]"""
+
+
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,7 +103,7 @@ class Bot(discord.Client):
                 force_reply = True
             elif command == "help":
                 embed = discord.Embed(title="Help",
-                                      description="{0}forcereply: Forces the bot to reply.".format(prefix))
+                                      description=help_text.format(prefix))
                 await channel.send(embed=embed)
                 return
             else:
