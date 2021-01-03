@@ -46,6 +46,7 @@ help_text = """`{0}help`: Shows this message.
 `{0}forget`: Makes the chatbot forget everything and start fresh.
 `{0}options prefix`: Changes the prefix.
 `{0}options mode`: Sets how often the bot should reply.
+> `{0}options mode get` - Gets the current mode.
 > `{0}options mode default` (servers only) - uses the server default (see `options smode`).
 > `{0}options mode [rarely|sometimes|often|conversational|always]` - presets (default `often` for servers, `often` for dms)
 > `{0}options mode <eagerness> <interactivity>`:
@@ -156,6 +157,13 @@ class Bot(discord.Client):
                                 await channel.send("^^Success! Options reset to server default.")
                             else:
                                 await channel.send("^^This command is only available on servers.")
+                        elif split_command[2] == "get":
+                            for preset, values in conversation_presets.items():
+                                if (eagerness, interactivity) == values:
+                                    await channel.send("^^This channel's mode is currently: {} (eagerness {}, interactivity {})".format(preset, eagerness, interactivity))
+                                    break
+                            else:
+                                await channel.send("^^This channel's mode is currently: eagerness {}, interactivity {}".format(eagerness, interactivity))
                         else:
                             for preset, values in conversation_presets.items():
                                 if split_command[2] == preset:
