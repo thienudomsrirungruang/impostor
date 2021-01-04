@@ -147,30 +147,45 @@ class Bot(discord.Client):
                         else:
                             self.database_accessor.set_chat_prefix(channel.id, new_prefix)
                         await channel.send("^^Success! Prefix changed to `{0}`".format(new_prefix))
-                elif split_command[1] == "mode":
+                elif split_command[1] in ("mode", "smode"):
+                    if split_command[1] == "smode" and channel.type != discord.ChannelType.text:
+                        await channel.send("^^This command is only available on servers.")
+                        return
                     if len(split_command) == 2:
                         await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
                     elif len(split_command) == 3:
-                        if split_command[2] == "default":
+                        if split_command[2] == "default" and split_command[1] == "mode":
                             if channel.type == discord.ChannelType.text:
                                 self.database_accessor.set_chat_override(channel.id, False)
                                 await channel.send("^^Success! Options reset to server default.")
                             else:
                                 await channel.send("^^This command is only available on servers.")
                         elif split_command[2] == "get":
+                            if split_command[1] == "mode":
+                                e, i = eagerness, interactivity
+                            else:
+                                e, i = guild_obj.eagerness, guild_obj.interactivity
                             for preset, values in conversation_presets.items():
-                                if (eagerness, interactivity) == values:
-                                    await channel.send("^^This channel's mode is currently: {} (eagerness {}, interactivity {})".format(preset, eagerness, interactivity))
+                                if (e, i) == values:
+                                    await channel.send("^^This {}'s mode is currently: {} (eagerness {}, interactivity {})"
+                                                       .format("channel" if split_command[1] == "mode" else "server",
+                                                               preset, e, i))
                                     break
                             else:
-                                await channel.send("^^This channel's mode is currently: eagerness {}, interactivity {}".format(eagerness, interactivity))
+                                await channel.send("^^This {}'s mode is currently: eagerness {}, interactivity {}"
+                                                   .format("channel" if split_command[1] == "mode" else "server",
+                                                           e, i))
                         else:
                             for preset, values in conversation_presets.items():
                                 if split_command[2] == preset:
-                                    self.database_accessor.set_chat_eagerness_interactivity(channel.id, *values)
-                                    if channel.type == discord.ChannelType.text:
-                                        self.database_accessor.set_chat_override(channel.id, True)
-                                    await channel.send("^^Success! Options set to {}.".format(preset))
+                                    if split_command[1] == "mode":
+                                        self.database_accessor.set_chat_eagerness_interactivity(channel.id, *values)
+                                        if channel.type == discord.ChannelType.text:
+                                            self.database_accessor.set_chat_override(channel.id, True)
+                                        await channel.send("^^Success! Channel options set to {}.".format(preset))
+                                    else:
+                                        self.database_accessor.set_guild_eagerness_interactivity(channel.guild.id, *values)
+                                        await channel.send("^^Success! Server options set to {}.".format(preset))
                                     break
                             else:
                                 await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
@@ -181,8 +196,14 @@ class Bot(discord.Client):
                             if not (0 <= eagerness <= 1000 and 0 <= interactivity <= 1000):
                                 await channel.send("^^Eagerness and interactivity values must be between 0 and 1000 inclusive.")
                             else:
-                                self.database_accessor.set_chat_eagerness_interactivity(channel.id, eagerness, interactivity)
-                                await channel.send("^^Success! Eagerness set to {} and interactivity set to {}.".format(eagerness, interactivity))
+                                if split_command[1] == "mode":
+                                    self.database_accessor.set_chat_eagerness_interactivity(channel.id, eagerness, interactivity)
+                                    if channel.type == discord.ChannelType.text:
+                                        self.database_accessor.set_chat_override(channel.id, True)
+                                    await channel.send("^^Success! Channel eagerness set to {} and interactivity set to {}.".format(eagerness, interactivity))
+                                else:
+                                    self.database_accessor.set_guild_eagerness_interactivity(channel.guild.id, eagerness, interactivity)
+                                    await channel.send("^^Success! Server eagerness set to {} and interactivity set to {}.".format(eagerness, interactivity))
                         except ValueError:
                             await channel.send("^^Command options not recognized. Please type `{0}help` for more info.".format(clean_prefix))
                 else:
