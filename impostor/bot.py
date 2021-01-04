@@ -48,7 +48,7 @@ help_text = """`{0}help`: Shows this message.
 `{0}options mode`: Sets how often the bot should reply.
 > `{0}options mode get` - Gets the current mode.
 > `{0}options mode default` (servers only) - uses the server default (see `options smode`).
-> `{0}options mode [rarely|sometimes|often|conversational|always]` - presets (default `often` for servers, `often` for dms)
+> `{0}options mode [rarely|sometimes|often|conversational|always]` - presets (default `often` for servers, `help` for dms)
 > `{0}options mode <eagerness> <interactivity>`:
 > - `eagerness` (0 to 1000) modifies the base value of probability.
 > - `interactivity` (0 to 1000) modifies the increased chance of replying after a message is ignored.
@@ -59,7 +59,7 @@ help_text = """`{0}help`: Shows this message.
 > - `often`: 1.0 / 0.1
 > - `conversational`: 3.0 / 1.4
 > - `always`: 1000.0 / 1000.0
-`{0}options smode`: [WIP]"""
+`{0}options smode`: Same as `mode` but sets server default values. Only works on servers."""
 
 
 class Bot(discord.Client):
